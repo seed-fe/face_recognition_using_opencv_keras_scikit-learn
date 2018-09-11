@@ -15,7 +15,7 @@ def getTrainingData(window_name, camera_id, path_name, max_num): # path_name是�
     num = 0 # 记录存储的图片数量
     
     while cap.isOpened():
-        ok, frame = cap.read()
+        ok, frame = cap.read() # type(frame) <class 'numpy.ndarray'>
         if not ok:
             break
         
@@ -48,7 +48,7 @@ def getTrainingData(window_name, camera_id, path_name, max_num): # path_name是�
     cap.release()#释放摄像头并销毁所有窗口
     cv2.destroyAllWindows()
     print('Finished.')
-#主函数
+# 主函数
 if __name__ =='__main__':
     print ('catching your face and writting into disk...')
     getTrainingData('getTrainData',0,'training_data_test/',100) # 注意这里的training_data 文件夹就在程序工作目录下

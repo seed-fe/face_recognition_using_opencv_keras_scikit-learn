@@ -41,7 +41,7 @@ def resize_image(image, height = IMAGE_SIZE, width = IMAGE_SIZE):
     # 调整图像大小并返回图像，目的是减少计算量和内存占用，提升训练速度
     return cv2.resize(constant, (height, width))
 
-# 读取训练数据到内存
+# 读取训练数据到内存，这里数据结构是列表
 images = []
 labels = []
 
@@ -66,7 +66,7 @@ def load_dataset(path_name):
     images,labels = read_path(path_name)
     # 将lsit转换为numpy array
     images = np.array(images, dtype='float') # 注意这里要将数据类型设为float，否则后面face_train_keras.py里图像归一化的时候会报错，TypeError: No loop matching the specified signature and casting was found for ufunc true_divide
-    print(images.shape) # (1969, 64, 64, 3)
+#    print(images.shape) # (1969, 64, 64, 3)
     # 标注数据，me文件夹下是我，指定为0，其他指定为1，这里的0和1不是logistic regression二分类输出下的0和1，而是softmax下的多分类的类别
     labels = np.array([0 if label.endswith('me') else 1 for label in labels])
     return images, labels
@@ -74,3 +74,5 @@ def load_dataset(path_name):
 if __name__ == '__main__':
     path_name = os.getcwd() # 获取当前工作目录
     images, labels = load_dataset(path_name)
+    print(labels)
+    print(labels.shape)

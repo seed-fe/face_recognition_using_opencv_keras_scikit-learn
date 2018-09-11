@@ -61,11 +61,11 @@ class Dataset:
         _, test_images, _, test_labels = train_test_split(images, labels, test_size = 0.5, random_state = random.randint(0, 100))
         # tensorflow 作为后端，数据格式约定是channel_last，与这里数据本身的格式相符，如果是channel_first，就要对数据维度顺序进行一下调整
         self.input_shape = (img_rows, img_cols, img_channels)
-        if K.image_data_format == 'channel_first':
-            train_images = train_images.reshape(train_images.shape[0],img_channels, img_rows, img_cols)
-            valid_images = valid_images.reshape(valid_images.shape[0],img_channels, img_rows, img_cols)
-            test_images = test_images.reshape(test_images.shape[0],img_channels, img_rows, img_cols)
-            self.input_shape = (img_channels, img_rows, img_cols)
+#        if K.image_data_format == 'channel_first':
+#            train_images = train_images.reshape(train_images.shape[0],img_channels, img_rows, img_cols)
+#            valid_images = valid_images.reshape(valid_images.shape[0],img_channels, img_rows, img_cols)
+#            test_images = test_images.reshape(test_images.shape[0],img_channels, img_rows, img_cols)
+#            self.input_shape = (img_channels, img_rows, img_cols)
         # 输出训练集、验证集和测试集的数量
         print(train_images.shape[0], 'train samples')
         print(valid_images.shape[0], 'valid samples')
@@ -161,14 +161,25 @@ class Model:
 #                                      steps_per_epoch = 68,
                                       epochs = nb_epoch, # 这里注意keras2里参数名称是epochs而不是nb_epoch，否则会warning，参考https://stackoverflow.com/questions/46314003/keras-2-fit-generator-userwarning-steps-per-epoch-is-not-the-same-as-the-kera
                                       validation_data = (dataset.valid_images, dataset.valid_labels))
-#    MODEL_PATH = './me.face.model.h5'
     def save_model(self, file_path):
         self.model.save(file_path)
     def load_model(self, file_path):
         self.model = load_model(file_path)
     def evaluate(self, dataset):
-        score = self.model.evaluate(dataset.test_images, dataset.test_labels)
+        score = self.model.evaluate(dataset.test_images, dataset.test_labels) # evaluate返回的结果是list，两个元素分别是test loss和test accuracy
         print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100)) # 注意这里.2f后面的第二个百分号就是百分号，其余两个百分号则是格式化输出浮点数的语法。
+    def face_predict(self, image):
+        # 将探测到的人脸reshape为符合输入要求的尺寸
+        image = resize_image(image)
+        image = image.reshape((1, IMAGE_SIZE, IMAGE_SIZE, 3))
+        # 图片浮点化并归一化
+        image = image.astype('float32') # float32	Single precision float: sign bit, 8 bits exponent, 23 bits mantissa
+        image /= 255
+        result = self.model.predict(image)
+#        print('result:', result)
+#        print(result.shape) # (1,2)
+#        print(type(result)) # <class 'numpy.ndarray'>
+        return result.argmax(axis=-1) #  The axis=-1 in numpy corresponds to the last dimension
 if __name__ == '__main__':
     dataset = Dataset('./dataset/')
     dataset.load()
