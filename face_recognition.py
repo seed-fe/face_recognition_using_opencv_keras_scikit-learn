@@ -7,7 +7,6 @@ Created on Tue Sep 11 17:33:58 2018
 
 import cv2
 #import sys
-import gc
 from face_train_keras import Model
 #加载模型
 model = Model()
@@ -37,7 +36,7 @@ while cap.isOpened():
 #                print(type(faceID)) # <class 'numpy.ndarray'>
 #                print(faceID.shape) # (1,)
 #                #如果是“我”
-                if faceID == 0:                                                        
+                if faceID[0] == 0:                                                        
                     cv2.rectangle(frame, (x - 10, y - 10), (x + w + 10, y + h + 10), color, thickness = 2)
                     
                     #文字提示是谁

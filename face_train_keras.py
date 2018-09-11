@@ -17,6 +17,7 @@ from keras.models import load_model
 from keras import backend as K
 
 from load_face_dataset import load_dataset, resize_image, IMAGE_SIZE
+import cv2
 
 '''
 对数据集的处理，包括：
@@ -58,6 +59,7 @@ class Dataset:
         images, labels = load_dataset(self.path_name)
         # 注意下面数据集的划分是随机的，所以每次运行程序的训练结果会不一样
         train_images, valid_images, train_labels, valid_labels = train_test_split(images, labels, test_size = 0.3, random_state = random.randint(0,100))
+        print(train_labels) # 有0有1，每次运行都不一样
         _, test_images, _, test_labels = train_test_split(images, labels, test_size = 0.5, random_state = random.randint(0, 100))
         # tensorflow 作为后端，数据格式约定是channel_last，与这里数据本身的格式相符，如果是channel_first，就要对数据维度顺序进行一下调整
         self.input_shape = (img_rows, img_cols, img_channels)
@@ -191,6 +193,14 @@ if __name__ == '__main__':
 #    model.save_model('./model/me.face.model.h5') # 注意这里要在工作目录下先新建model文件夹，否则会报错：Unable to create file，error message = 'No such file or directory'
     
     # 用测试集评估模型
-    model = Model()
-    model.load_model(file_path = './model/me.face.model.h5')
-    model.evaluate(dataset)
+#    model = Model()
+#    model.load_model(file_path = './model/me.face.model.h5')
+#    model.evaluate(dataset)
+    
+    # 用训练集里的图片验证，结果是准确的
+#    model = Model()
+#    model.load_model(file_path = './model/me.face.model.h5')
+#    image_test_her = cv2.imread('./dataset/training_data_her/1000.jpg')
+#    image_test_me = cv2.imread('./dataset/training_data_me/1.jpg')
+#    test_result = model.face_predict(image_test_her)
+#    print(test_result)
