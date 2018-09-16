@@ -1,3 +1,4 @@
 dataset/**
 model/**
 __pycache__
+*.txt

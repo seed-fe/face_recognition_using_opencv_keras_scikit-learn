@@ -40,8 +40,8 @@ class Dataset:
         self.train_labels = None
         
         # 验证集
-        self.valid_images = None
-        self.valid_labels = None
+#        self.valid_images = None
+#        self.valid_labels = None
         
         # 测试集
         self.test_images = None
@@ -58,9 +58,11 @@ class Dataset:
         # 加载数据集到内存
         images, labels = load_dataset(self.path_name)
         # 注意下面数据集的划分是随机的，所以每次运行程序的训练结果会不一样
-        train_images, valid_images, train_labels, valid_labels = train_test_split(images, labels, test_size = 0.3, random_state = random.randint(0,100))
-        print(train_labels) # 有0有1，每次运行都不一样
-        _, test_images, _, test_labels = train_test_split(images, labels, test_size = 0.5, random_state = random.randint(0, 100))
+#        train_images, valid_images, train_labels, valid_labels = train_test_split(images, labels, test_size = 0.3, random_state = random.randint(0,100))
+#        print(train_labels) # 有0有1，每次运行都不一样
+        # When coding, we often use _ as a "throwaway" variable to store values that we won't need to use later. https://stackoverflow.com/questions/5893163/what-is-the-purpose-of-the-single-underscore-variable-in-python
+#        _, test_images, _, test_labels = train_test_split(images, labels, test_size = 0.5, random_state = random.randint(0, 100))
+        train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size = 0.3, random_state = random.randint(0, 100))
         # tensorflow 作为后端，数据格式约定是channel_last，与这里数据本身的格式相符，如果是channel_first，就要对数据维度顺序进行一下调整
         self.input_shape = (img_rows, img_cols, img_channels)
 #        if K.image_data_format == 'channel_first':
@@ -70,11 +72,11 @@ class Dataset:
 #            self.input_shape = (img_channels, img_rows, img_cols)
         # 输出训练集、验证集和测试集的数量
         print(train_images.shape[0], 'train samples')
-        print(valid_images.shape[0], 'valid samples')
+#        print(valid_images.shape[0], 'valid samples')
         print(test_images.shape[0], 'test samples')
         # 后面模型中会使用categorical_crossentropy作为损失函数，这里要对类别标签进行One-hot编码
         train_labels = keras.utils.to_categorical(train_labels, nb_classes)
-        valid_labels = keras.utils.to_categorical(valid_labels, nb_classes)
+#        valid_labels = keras.utils.to_categorical(valid_labels, nb_classes)
         test_labels = keras.utils.to_categorical(test_labels,nb_classes)
         #像素数据浮点化以便归一化
 #55             train_images = train_images.astype('float32')            
@@ -82,14 +84,14 @@ class Dataset:
 #57             test_images = test_images.astype('float32')
         # 图像归一化，将图像的各像素值归一化到0~1区间，注意python3中除法运算返回值都是float类型，参考https://blog.csdn.net/hehedadaq/article/details/81099446
         train_images /= 255
-        valid_images /= 255
+#        valid_images /= 255
         test_images /= 255
         
         self.train_images = train_images
-        self.valid_images = valid_images
+#        self.valid_images = valid_images
         self.test_images  = test_images
         self.train_labels = train_labels
-        self.valid_labels = valid_labels
+#        self.valid_labels = valid_labels
         self.test_labels  = test_labels
         
 
@@ -106,7 +108,7 @@ class Model:
     # 初始化构造方法
     def __init__(self):
         self.model = None
-    # 建立模型
+    # 建立模型，这里用的其实就是keras/examples/cifar10_cnn.py
     def build_model(self, dataset, nb_classes = 2):
         self.model = Sequential()
         self.model.add(Conv2D(32, (3, 3), padding = 'same', input_shape = dataset.input_shape)) # 当使用该层作为模型第一层时，需要提供 input_shape 参数 （整数元组，不包含batch_size）
@@ -114,7 +116,6 @@ class Model:
         self.model.add(Conv2D(32, (3, 3)))
         self.model.add(Activation('relu'))
         self.model.add(MaxPooling2D(pool_size = (2,2))) # strides默认等于pool_size
-        self.model.add(Dropout(0.25))
         self.model.add(Conv2D(64, (3, 3), padding = 'same'))
         self.model.add(Activation('relu'))
         self.model.add(Conv2D(64, (3, 3)))
@@ -131,7 +132,7 @@ class Model:
 #        self.model.summary()
         
     # 训练模型
-    def train(self, dataset, batch_size = 20, nb_epoch = 7, data_augmentation = True):
+    def train(self, dataset, batch_size = 20, nb_epoch = 8, data_augmentation = True):
 #        sgd = SGD(lr = 0.01, decay = 1e-6, momentum = 0.9, nesterov = True) #采用SGD+momentum的优化器进行训练，首先生成一个优化器对象
         # https://jovianlin.io/cat-crossentropy-vs-sparse-cat-crossentropy/
         # If your targets are one-hot encoded, use categorical_crossentropy, if your targets are integers, use sparse_categorical_crossentropy.
@@ -143,7 +144,8 @@ class Model:
             self.model.fit(dataset.train_images, 
                            dataset.train_labels, 
                            batch_size = batch_size,
-                           epochs = nb_epoch, validation_data = (dataset.valid_images, dataset.valid_labels),
+                           epochs = nb_epoch, 
+#                           validation_data = (dataset.valid_images, dataset.valid_labels),
                            shuffle = True)
         # 图像预处理
         else:
@@ -161,8 +163,10 @@ class Model:
             self.model.fit_generator(datagen.flow(dataset.train_images, dataset.train_labels,
                                                     batch_size = batch_size),
 #                                      steps_per_epoch = 68,
-                                      epochs = nb_epoch, # 这里注意keras2里参数名称是epochs而不是nb_epoch，否则会warning，参考https://stackoverflow.com/questions/46314003/keras-2-fit-generator-userwarning-steps-per-epoch-is-not-the-same-as-the-kera
-                                      validation_data = (dataset.valid_images, dataset.valid_labels))
+                                      epochs = nb_epoch # 这里注意keras2里参数名称是epochs而不是nb_epoch，否则会warning，参考https://stackoverflow.com/questions/46314003/keras-2-fit-generator-userwarning-steps-per-epoch-is-not-the-same-as-the-kera
+#                                      , 
+#                                      validation_data = (dataset.valid_images, dataset.valid_labels)
+                                      )
     def save_model(self, file_path):
         self.model.save(file_path)
     def load_model(self, file_path):
@@ -186,11 +190,12 @@ if __name__ == '__main__':
     dataset = Dataset('./dataset/')
     dataset.load()
     # 训练模型
-#    model = Model()
-#    model.build_model(dataset)
-#    #测试训练函数的代码
-#    model.train(dataset)
-#    model.save_model('./model/me.face.model.h5') # 注意这里要在工作目录下先新建model文件夹，否则会报错：Unable to create file，error message = 'No such file or directory'
+    model = Model()
+    model.build_model(dataset)
+    #测试训练函数的代码
+    model.train(dataset)
+    model.evaluate(dataset)
+    model.save_model('./model/me.face.model.h5') # 注意这里要在工作目录下先新建model文件夹，否则会报错：Unable to create file，error message = 'No such file or directory'
     
     # 用测试集评估模型
 #    model = Model()
