@@ -63,6 +63,7 @@ class Dataset:
         # When coding, we often use _ as a "throwaway" variable to store values that we won't need to use later. https://stackoverflow.com/questions/5893163/what-is-the-purpose-of-the-single-underscore-variable-in-python
 #        _, test_images, _, test_labels = train_test_split(images, labels, test_size = 0.5, random_state = random.randint(0, 100))
         train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size = 0.3, random_state = random.randint(0, 100))
+#        print(test_labels) # 确认了每次都不一样
         # tensorflow 作为后端，数据格式约定是channel_last，与这里数据本身的格式相符，如果是channel_first，就要对数据维度顺序进行一下调整
         self.input_shape = (img_rows, img_cols, img_channels)
 #        if K.image_data_format == 'channel_first':
@@ -132,7 +133,7 @@ class Model:
 #        self.model.summary()
         
     # 训练模型
-    def train(self, dataset, batch_size = 20, nb_epoch = 8, data_augmentation = True):
+    def train(self, dataset, batch_size = 128, nb_epoch = 8, data_augmentation = True):
 #        sgd = SGD(lr = 0.01, decay = 1e-6, momentum = 0.9, nesterov = True) #采用SGD+momentum的优化器进行训练，首先生成一个优化器对象
         # https://jovianlin.io/cat-crossentropy-vs-sparse-cat-crossentropy/
         # If your targets are one-hot encoded, use categorical_crossentropy, if your targets are integers, use sparse_categorical_crossentropy.
