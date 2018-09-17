@@ -59,7 +59,7 @@ def read_path(path_name):
                 image = resize_image(image, IMAGE_SIZE, IMAGE_SIZE)
                 
                 images.append(image)
-                labels.append(path_name)
+                labels.append(path_name) # 这里最终的path_name是递归过后最终包含图片文件的路径
     return images, labels
 # 读取训练数据并完成标注
 def load_dataset(path_name):

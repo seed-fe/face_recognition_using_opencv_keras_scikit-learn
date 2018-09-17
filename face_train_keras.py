@@ -65,12 +65,14 @@ class Dataset:
         train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size = 0.3, random_state = random.randint(0, 100))
 #        print(test_labels) # 确认了每次都不一样
         # tensorflow 作为后端，数据格式约定是channel_last，与这里数据本身的格式相符，如果是channel_first，就要对数据维度顺序进行一下调整
-        self.input_shape = (img_rows, img_cols, img_channels)
-#        if K.image_data_format == 'channel_first':
-#            train_images = train_images.reshape(train_images.shape[0],img_channels, img_rows, img_cols)
-#            valid_images = valid_images.reshape(valid_images.shape[0],img_channels, img_rows, img_cols)
-#            test_images = test_images.reshape(test_images.shape[0],img_channels, img_rows, img_cols)
-#            self.input_shape = (img_channels, img_rows, img_cols)
+        if K.image_data_format == 'channel_first':
+            train_images = train_images.reshape(train_images.shape[0],img_channels, img_rows, img_cols)
+            test_images = test_images.reshape(test_images.shape[0],img_channels, img_rows, img_cols)
+            self.input_shape = (img_channels, img_rows, img_cols)
+        else:
+            train_images = train_images.reshape(train_images.shape[0], img_rows, img_cols, img_channels)
+            test_images = test_images.reshape(test_images.shape[0], img_rows, img_cols, img_channels)
+            self.input_shape = (img_rows, img_cols, img_channels)
         # 输出训练集、验证集和测试集的数量
         print(train_images.shape[0], 'train samples')
 #        print(valid_images.shape[0], 'valid samples')
@@ -133,7 +135,7 @@ class Model:
 #        self.model.summary()
         
     # 训练模型
-    def train(self, dataset, batch_size = 128, nb_epoch = 8, data_augmentation = True):
+    def train(self, dataset, batch_size = 64, nb_epoch = 10, data_augmentation = True):
 #        sgd = SGD(lr = 0.01, decay = 1e-6, momentum = 0.9, nesterov = True) #采用SGD+momentum的优化器进行训练，首先生成一个优化器对象
         # https://jovianlin.io/cat-crossentropy-vs-sparse-cat-crossentropy/
         # If your targets are one-hot encoded, use categorical_crossentropy, if your targets are integers, use sparse_categorical_crossentropy.
@@ -174,7 +176,7 @@ class Model:
         self.model = load_model(file_path)
     def evaluate(self, dataset):
         score = self.model.evaluate(dataset.test_images, dataset.test_labels) # evaluate返回的结果是list，两个元素分别是test loss和test accuracy
-        print("%s: %.2f%%" % (self.model.metrics_names[1], score[1] * 100)) # 注意这里.2f后面的第二个百分号就是百分号，其余两个百分号则是格式化输出浮点数的语法。
+        print("%s: %.3f%%" % (self.model.metrics_names[1], score[1] * 100)) # 注意这里.2f后面的第二个百分号就是百分号，其余两个百分号则是格式化输出浮点数的语法。
     def face_predict(self, image):
         # 将探测到的人脸reshape为符合输入要求的尺寸
         image = resize_image(image)
