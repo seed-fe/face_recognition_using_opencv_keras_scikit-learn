@@ -9,7 +9,7 @@ import os
 import numpy as np
 import cv2
 
-IMAGE_SIZE = 64 # 指定图像大小
+IMAGE_SIZE = 96 # 指定图像大小
 
 # 按指定图像大小调整尺寸
 def resize_image(image, height = IMAGE_SIZE, width = IMAGE_SIZE):
