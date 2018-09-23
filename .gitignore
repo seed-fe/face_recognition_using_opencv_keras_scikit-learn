@@ -1,4 +1,8 @@
-dataset/**
-model/**
+dataset
+model
 __pycache__
 *.txt
+lfw
+data_lin
+data_me_dark
+unused
