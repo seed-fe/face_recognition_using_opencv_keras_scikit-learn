@@ -31,7 +31,7 @@ while cap.isOpened():
                 
                 #截取脸部图像提交给模型识别这是谁
                 image = frame[y - 10: y + h + 10, x - 10: x + w + 10]
-                if image is None: # 有的时候可能是人脸探测有问题，会报错 error (-215) ssize.width > 0 && ssize.height > 0 in function cv::resize，所以这里要判断一下image是不是None，防止极端情况
+                if image is None: # 有的时候可能是人脸探测有问题，会报错 error (-215) ssize.width > 0 && ssize.height > 0 in function cv::resize，所以这里要判断一下image是不是None，防止极端情况 https://blog.csdn.net/qq_30214939/article/details/77432167
                     break
                 else:
                     faceID = model.face_predict(image)
