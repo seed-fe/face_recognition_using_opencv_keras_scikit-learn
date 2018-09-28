@@ -2,3 +2,8 @@ dataset/**
 model/**
 __pycache__
 *.txt
+data_lin
+data_me_dark
+lfw
+unused
+model_well
