@@ -24,11 +24,11 @@ import numpy as np
 from numpy import genfromtxt
 import pandas as pd
 import tensorflow as tf
-from fr_utils import *
-from inception_blocks import *
+from fr_utils import load_weights_from_FaceNet, img_to_encoding
+from inception_blocks import faceRecoModel
 
 # 建立模型
-FRmodel = faceRecoModel(input_shape=(3, 96, 96))
+FRmodel = faceRecoModel(input_shape=(3, 96, 96)) # faceRecoModel在inception_blocks里定义
 print("Total Params:", FRmodel.count_params())
 
 # 定义triplet loss
