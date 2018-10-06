@@ -188,11 +188,10 @@ def load_dataset():
     
     return train_set_x_orig, train_set_y_orig, test_set_x_orig, test_set_y_orig, classes
 
-def img_to_encoding(image, model):
-#    img1 = cv2.imread(image_path, 1) # '1'表示载入彩色图片
-    img1 = image
-    img = img1[...,::-1]
-    img = np.around(np.transpose(img, (2,0,1))/255.0, decimals=12)
-    x_train = np.array([img])
-    embedding = model.predict_on_batch(x_train)
+def img_to_encoding(images, model):
+    # 这里image的格式就是opencv读入后的格式
+    images = images[...,::-1] # Color image loaded by OpenCV is in BGR mode. But Matplotlib displays in RGB mode. 这里的操作实际是对channel这一dim进行reverse，从BGR转换为RGB
+    images = np.around(np.transpose(images, (0,3,1,2))/255.0, decimals=12) # np.around是四舍五入，其中decimals是保留的小数位数，这里的transpose是把图片改为channel_first
+#    x_train = np.array([img])
+    embedding = model.predict_on_batch(images)
     return embedding

@@ -12,29 +12,20 @@ Created on Mon Oct  1 11:00:25 2018
 # 3、用训练好的模型进行实时人脸识别
 # =============================================================================
 
-from keras.models import Sequential
-from keras.layers import Conv2D, ZeroPadding2D, Activation, Input, concatenate
-from keras.models import Model
-from keras.layers.normalization import BatchNormalization
-from keras.layers.pooling import MaxPooling2D, AveragePooling2D
-from keras.layers.merge import Concatenate
-from keras.layers.core import Lambda, Flatten, Dense
-from keras.initializers import glorot_uniform
-from keras.engine.topology import Layer
+
+import tensorflow as tf
+
 from keras import backend as K
 K.set_image_data_format('channels_first')
-import cv2
-
+4
 from load_face_dataset import load_dataset, IMAGE_SIZE, resize_image
 
-import os
+
 import numpy as np
-from numpy import genfromtxt
-import pandas as pd
-import tensorflow as tf
-#from facenet_model import FRmodel
-from fr_utils import load_weights_from_FaceNet, img_to_encoding
+
+
 from inception_blocks import faceRecoModel
+from fr_utils import load_weights_from_FaceNet, img_to_encoding
 import random
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
@@ -114,19 +105,21 @@ class Dataset:
         # 加载数据集到内存
         images, labels = load_dataset(self.path_name)
         # tensorflow 作为后端，数据格式约定是channel_last，与这里数据本身的格式相符，如果是channel_first，就要对数据维度顺序进行一下调整
-        if K.image_data_format == 'channel_first':
-            images = images.reshape(images.shape[0],img_channels, img_rows, img_cols)
-            self.input_shape = (img_channels, img_rows, img_cols)
-        else:
-            images = images.reshape(images.shape[0], img_rows, img_cols, img_channels)
-            self.input_shape = (img_rows, img_cols, img_channels)
-        X_encoding = []
-        for image in images:
-            encoding = img_to_encoding(image, model)
-            X_encoding.append(encoding[0])
-        X_encoding = np.array(X_encoding)
-        print(X_encoding.shape)
-        X_train, X_test, y_train, y_test = train_test_split(X_encoding, labels, test_size = 0.3, random_state = random.randint(0, 100))
+#        if K.image_data_format == 'channel_first':
+#            images = images.reshape(images.shape[0],img_channels, img_rows, img_cols)
+#            self.input_shape = (img_channels, img_rows, img_cols)
+#        else:
+#            images = images.reshape(images.shape[0], img_rows, img_cols, img_channels)
+#            self.input_shape = (img_rows, img_cols, img_channels)
+#        X_encoding = []
+##        在img_to_encoding函数里已经进行了归一化，因此这里不需要再归一化了
+#        for image in images:
+#            encoding = img_to_encoding(image, model)
+#            X_encoding.append(encoding[0])
+#        X_encoding = np.array(X_encoding)
+#        print(X_encoding.shape)
+        X_embedding = img_to_encoding(images, model)
+        X_train, X_test, y_train, y_test = train_test_split(X_embedding, labels, test_size = 0.3, random_state = random.randint(0, 100))
 #        print(test_labels) # 确认了每次都不一样
         
         # 输出训练集、验证集和测试集的数量
@@ -159,10 +152,11 @@ class Knn_Model:
         predict = self.model.predict(dataset.X_test)
         accuracy = metrics.accuracy_score(dataset.y_test, predict)
         print ('accuracy: %.2f%%' % (100 * accuracy))
-#    def predict(self, image):
-#        image = resize_image(image)
-#        image = image.reshape((1, 3, IMAGE_SIZE, IMAGE_SIZE))
-#        label = self.model.predict()
+    def predict(self, image):
+        image = resize_image(image)
+        image_embedding = img_to_encoding(np.array([image]), FRmodel)
+        label = self.model.predict(image_embedding)
+        return label[0]
 
 # https://teamtreehouse.com/community/getting-a-syntax-error-at-main
 # 注意这里遇到了一个bug，在下面的代码上提示invalid syntax，其实是因为上面的print语句少了最后一个圆括号
