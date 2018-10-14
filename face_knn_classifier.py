@@ -15,17 +15,16 @@ Created on Mon Oct  1 11:00:25 2018
 
 import tensorflow as tf
 
-from keras import backend as K
-K.set_image_data_format('channels_first')
-4
+#from keras import backend as K
+#K.set_image_data_format('channels_first')
+from keras.models import load_model
 from load_face_dataset import load_dataset, IMAGE_SIZE, resize_image
 
 
 import numpy as np
 
 
-from inception_blocks import faceRecoModel
-from fr_utils import load_weights_from_FaceNet, img_to_encoding
+from fr_utils import img_to_encoding
 import random
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
@@ -33,46 +32,8 @@ from sklearn.externals import joblib
 from sklearn import metrics
 
 # 建立facenet模型
-FRmodel = faceRecoModel(input_shape=(3, 96, 96)) # faceRecoModel在inception_blocks里定义
-print("Total Params:", FRmodel.count_params())
-
-# 定义triplet loss
-def triplet_loss(y_true, y_pred, alpha = 0.2):
-    """
-    Implementation of the triplet loss as defined by formula (3)
-    
-    Arguments:
-    y_true -- true labels, required when you define a loss in Keras, you don't need it in this function.
-    y_pred -- python list containing three objects:
-            anchor -- the encodings for the anchor images, of shape (None, 128)
-            positive -- the encodings for the positive images, of shape (None, 128)
-            negative -- the encodings for the negative images, of shape (None, 128)
-    
-    Returns:
-    loss -- real number, value of the loss
-    """
-    
-    anchor, positive, negative = y_pred[0], y_pred[1], y_pred[2]
-    
-    ### START CODE HERE ### (≈ 4 lines)
-    # Step 1: Compute the (encoding) distance between the anchor and the positive
-    pos_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, positive))) # reduce_sum Computes the sum of elements across dimensions of a tensor. If axis is None, all dimensions are reduced, and a tensor with a single element is returned.
-    # print(pos_dist.shape)
-    # Step 2: Compute the (encoding) distance between the anchor and the negative
-    neg_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, negative)))
-    # Step 3: subtract the two previous distances and add alpha.
-    basic_loss = tf.add(tf.subtract(pos_dist, neg_dist), alpha)
-    # print(basic_loss.shape)
-    # Step 4: Take the maximum of basic_loss and 0.0. Sum over the training examples.
-    # loss = tf.reduce_sum(tf.maximum(basic_loss, 0))
-    loss = tf.maximum(basic_loss, 0)
-    ### END CODE HERE ###
-    
-    return loss
-
-# 载入训练好的权重
-FRmodel.compile(optimizer = 'adam', loss = triplet_loss, metrics = ['accuracy'])
-load_weights_from_FaceNet(FRmodel)
+#with CustomObjectScope({'tf': tf}):
+facenet = load_model('./model/facenet_keras.h5') # bad marshal data (unknown type code)，这个模型只能用在python2环境
 
 class Dataset:
     # http://www.runoob.com/python3/python3-class.html
@@ -101,7 +62,7 @@ class Dataset:
         self.input_shape = None 
     
     # 加载数据集并按照交叉验证的原则划分数据集并进行相关预处理工作
-    def load(self, img_rows = IMAGE_SIZE, img_cols = IMAGE_SIZE, img_channels = 3, model = FRmodel):
+    def load(self, img_rows = IMAGE_SIZE, img_cols = IMAGE_SIZE, img_channels = 3, model = facenet):
         # 加载数据集到内存
         images, labels = load_dataset(self.path_name)
         # tensorflow 作为后端，数据格式约定是channel_last，与这里数据本身的格式相符，如果是channel_first，就要对数据维度顺序进行一下调整
@@ -118,7 +79,7 @@ class Dataset:
 #            X_encoding.append(encoding[0])
 #        X_encoding = np.array(X_encoding)
 #        print(X_encoding.shape)
-        X_embedding = img_to_encoding(images, model)
+        X_embedding = img_to_encoding(images, model) # 考虑这里分批执行，否则可能内存不够？
         X_train, X_test, y_train, y_test = train_test_split(X_embedding, labels, test_size = 0.3, random_state = random.randint(0, 100))
 #        print(test_labels) # 确认了每次都不一样
         
@@ -154,7 +115,7 @@ class Knn_Model:
         print ('accuracy: %.2f%%' % (100 * accuracy))
     def predict(self, image):
         image = resize_image(image)
-        image_embedding = img_to_encoding(np.array([image]), FRmodel)
+        image_embedding = img_to_encoding(np.array([image]), facenet)
         label = self.model.predict(image_embedding)
         return label[0]
 

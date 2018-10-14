@@ -9,7 +9,7 @@ import os
 import numpy as np
 import cv2
 
-IMAGE_SIZE = 96 # 指定图像大小
+IMAGE_SIZE = 160 # 指定图像大小
 
 # 按指定图像大小调整尺寸
 def resize_image(image, height = IMAGE_SIZE, width = IMAGE_SIZE):
@@ -41,41 +41,41 @@ def resize_image(image, height = IMAGE_SIZE, width = IMAGE_SIZE):
     # 调整图像大小并返回图像，目的是减少计算量和内存占用，提升训练速度
     return cv2.resize(constant, (height, width))
 
-# 读取训练数据到内存，这里数据结构是列表
-images = []
-labels = []
-
 # path_name是当前工作目录，后面会由os.getcwd()获得
-def read_path(path_name):
-    for dir_item in os.listdir(path_name): # os.listdir() 方法用于返回指定的文件夹包含的文件或文件夹的名字的列表
-        # 从当前工作目录寻找训练集图片的文件夹
-        full_path = os.path.abspath(os.path.join(path_name, dir_item))
-        
-        if os.path.isdir(full_path): # 如果是文件夹，继续递归调用，去读取文件夹里的内容
-            read_path(full_path)
-        else: # 如果是文件了
-            if dir_item.endswith('.jpg'):
-                image = cv2.imread(full_path)
-                if image is None: # 遇到部分数据有点问题，报错'NoneType' object has no attribute 'shape'
-                    pass
-                else:
-                    image = resize_image(image, IMAGE_SIZE, IMAGE_SIZE)
-                
-                    images.append(image)
-                    labels.append(path_name) # 这里最终的path_name是递归过后最终包含图片文件的路径
+def load_dataset(data_dir):
+    dataset = {}
+    for person in os.listdir(data_dir):
+        person_dir = os.path.join(data_dir, person)
+        person_images = []
+        for f in os.listdir(person_dir):
+            img = cv2.imread(os.path.join(person_dir, f))
+            if img is None: # 遇到部分数据有点问题，报错'NoneType' object has no attribute 'shape'
+                pass
+            else:
+                img = resize_image(img, IMAGE_SIZE, IMAGE_SIZE)
+            person_images.append(img)
+        dataset[person] = person_images
+    keys = []
+    for key in dataset:
+        keys.append(key)
+    images = []
+    labels = []
+    for me in dataset[keys[0]]:
+        images.append(me)
+        labels.append(0)
+    for other in dataset[keys[1]]:
+        images.append(other)
+        labels.append(1)
+    images = np.array(images)
+    labels = np.array(labels)
+    print(len(dataset)) # 2
+    print(len(dataset[keys[0]])) # 938
+    print(len(dataset[keys[1]])) # 1311
     return images, labels
-# 读取训练数据并完成标注
-def load_dataset(path_name):
-    images,labels = read_path(path_name)
-    # 将lsit转换为numpy array
-    images = np.array(images, dtype='float') # 注意这里要将数据类型设为float，否则后面face_train_keras.py里图像归一化的时候会报错，TypeError: No loop matching the specified signature and casting was found for ufunc true_divide
-#    print(images.shape) # (1969, 64, 64, 3)
-    # 标注数据，me文件夹下是我，指定为0，其他指定为1，这里的0和1不是logistic regression二分类输出下的0和1，而是softmax下的多分类的类别
-    labels = np.array([0 if label.endswith('me') else 1 for label in labels])
-    return images, labels
+
 
 if __name__ == '__main__':
     path_name = os.getcwd() # 获取当前工作目录
-    images, labels = load_dataset(path_name)
-    print(labels)
-    print(labels.shape)
+    images = load_dataset('./dataset/')
+#    print(labels)
+#    print(labels.shape)
