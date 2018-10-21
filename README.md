@@ -1,1 +1,2 @@
 # face_recognition_using_opencv_and_keras
+基于OpenCV和Keras实现的实时人脸识别程序，这一分支是用简单的CNN实现，FaceNet+KNN的方案可参考master分支。
