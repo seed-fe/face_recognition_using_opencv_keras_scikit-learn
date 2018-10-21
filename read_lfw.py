@@ -6,7 +6,6 @@ Created on Sat Sep 22 19:03:03 2018
 """
 import os
 import cv2
-import numpy as np
 
 
 num = 0
@@ -31,7 +30,9 @@ def read_lfw(lfw_path):
                     for faceRect in faceRects:
                         x,y,w,h = faceRect
                         # 捕捉到的图片的名字，这里用到了格式化字符串的输出
-                        image_name = '%s%d.jpg' % (path_name, num) # 注意这里图片名一定要加上扩展名，否则后面imwrite的时候会报错：could not find a writer for the specified extension in function cv::imwrite_ 参考：https://stackoverflow.com/questions/9868963/cvimwrite-could-not-find-a-writer-for-the-specified-extension
+                        # 注意这里图片名一定要加上扩展名，否则后面imwrite的时候会报错：could not find a writer for the specified extension in function cv::imwrite_ 
+                        # 参考：https://stackoverflow.com/questions/9868963/cvimwrite-could-not-find-a-writer-for-the-specified-extension
+                        image_name = '%s%d.jpg' % (path_name, num) 
                         image = image[y:y+h, x:x+w] # 将当前帧含人脸部分保存为图片，注意这里存的还是彩色图片，前面检测时灰度化是为了降低计算量；这里访问的是从y位开始到y+h-1位
                         cv2.imwrite(image_name, image)
                         num += 1
@@ -40,12 +41,7 @@ def read_lfw(lfw_path):
                             break
         if finished:
             print('Finished.')
-            break
-#                images.append(image)
-#    return images
-#def crop_lfw(lfw_path):
-#    images = np.array(read_lfw(lfw_path))
-#    
+            break 
     
 
 if __name__ =='__main__':

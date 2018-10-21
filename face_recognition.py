@@ -58,7 +58,6 @@ while cap.isOpened():
                                 1,                                     #字号
                                 (255,0,255),                           #颜色
                                 2)                                     #字的线宽
-#                    pass
         cv2.imshow("Detecting your face.", frame)
         
         #等待10毫秒看是否有按键输入

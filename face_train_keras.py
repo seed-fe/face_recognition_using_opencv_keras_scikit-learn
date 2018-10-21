@@ -7,17 +7,14 @@ Created on Mon Aug 13 20:53:14 2018
 
 import random
 import keras
-import numpy as np
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D
-from keras.optimizers import SGD
 from keras.models import load_model
 from keras import backend as K
 
 from load_face_dataset import load_dataset, resize_image, IMAGE_SIZE
-import cv2
 
 '''
 对数据集的处理，包括：
@@ -111,7 +108,7 @@ class Model:
     # 初始化构造方法
     def __init__(self):
         self.model = None
-    # 建立模型，这里用的其实就是keras/examples/cifar10_cnn.py
+    # 建立模型
     def build_model(self, dataset, nb_classes = 2):
         self.model = Sequential()
         self.model.add(Conv2D(32, (3, 3), padding = 'same', input_shape = dataset.input_shape)) # 当使用该层作为模型第一层时，需要提供 input_shape 参数 （整数元组，不包含batch_size）
@@ -136,11 +133,9 @@ class Model:
         
     # 训练模型
     def train(self, dataset, batch_size = 64, nb_epoch = 15, data_augmentation = True):
-#        sgd = SGD(lr = 0.01, decay = 1e-6, momentum = 0.9, nesterov = True) #采用SGD+momentum的优化器进行训练，首先生成一个优化器对象
         # https://jovianlin.io/cat-crossentropy-vs-sparse-cat-crossentropy/
         # If your targets are one-hot encoded, use categorical_crossentropy, if your targets are integers, use sparse_categorical_crossentropy.
         self.model.compile(loss = 'categorical_crossentropy', 
-#                           optimizer = sgd, 
                            optimizer = 'ADAM',
                            metrics = ['accuracy'])
         if not data_augmentation:
@@ -148,7 +143,6 @@ class Model:
                            dataset.train_labels, 
                            batch_size = batch_size,
                            epochs = nb_epoch, 
-#                           validation_data = (dataset.valid_images, dataset.valid_labels),
                            shuffle = True)
         # 图像预处理
         else:
@@ -160,23 +154,19 @@ class Model:
                                          horizontal_flip = True)                           
             #计算数据增强所需要的统计数据，计算整个训练样本集的数量以用于特征值归一化、ZCA白化等处理
 #            当且仅当 featurewise_center 或 featurewise_std_normalization 或 zca_whitening 设置为 True 时才需要。
-#            datagen.fit(dataset.train_images)
             #利用生成器开始训练模型
             # flow方法输入原始训练数据，生成批量增强数据
             self.model.fit_generator(datagen.flow(dataset.train_images, dataset.train_labels,
                                                     batch_size = batch_size),
-#                                      steps_per_epoch = 68,
                                       epochs = nb_epoch # 这里注意keras2里参数名称是epochs而不是nb_epoch，否则会warning，参考https://stackoverflow.com/questions/46314003/keras-2-fit-generator-userwarning-steps-per-epoch-is-not-the-same-as-the-kera
-#                                      , 
-#                                      validation_data = (dataset.valid_images, dataset.valid_labels)
                                       )
+    def evaluate(self, dataset):
+        score = self.model.evaluate(dataset.test_images, dataset.test_labels) # evaluate返回的结果是list，两个元素分别是test loss和test accuracy
+        print("%s: %.3f%%" % (self.model.metrics_names[1], score[1] * 100)) # 注意这里.3f后面的第二个百分号就是百分号，其余两个百分号则是格式化输出浮点数的语法。
     def save_model(self, file_path):
         self.model.save(file_path)
     def load_model(self, file_path):
         self.model = load_model(file_path)
-    def evaluate(self, dataset):
-        score = self.model.evaluate(dataset.test_images, dataset.test_labels) # evaluate返回的结果是list，两个元素分别是test loss和test accuracy
-        print("%s: %.3f%%" % (self.model.metrics_names[1], score[1] * 100)) # 注意这里.2f后面的第二个百分号就是百分号，其余两个百分号则是格式化输出浮点数的语法。
     def face_predict(self, image):
         # 将探测到的人脸reshape为符合输入要求的尺寸
         image = resize_image(image)
@@ -199,11 +189,6 @@ if __name__ == '__main__':
     model.train(dataset)
     model.evaluate(dataset)
     model.save_model('./model/me.face.model.h5') # 注意这里要在工作目录下先新建model文件夹，否则会报错：Unable to create file，error message = 'No such file or directory'
-    
-    # 用测试集评估模型
-#    model = Model()
-#    model.load_model(file_path = './model/me.face.model.h5')
-#    model.evaluate(dataset)
     
     # 用训练集里的图片验证，结果是准确的
 #    model = Model()
