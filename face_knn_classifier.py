@@ -24,7 +24,7 @@ import numpy as np
 
 
 from fr_utils import img_to_encoding
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, ShuffleSplit, KFold
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.externals import joblib
 import matplotlib.pyplot as plt
@@ -88,7 +88,9 @@ class Knn_Model:
         k_scores = []
         for k in k_range:
             knn = KNeighborsClassifier(n_neighbors = k)
-            score = cross_val_score(knn, dataset.X_train, dataset.y_train, cv = 10, scoring = 'accuracy').mean()
+#            cv = KFold(n_splits = 10, shuffle = True, random_state = 0)
+            cv = ShuffleSplit(random_state = 0) # n_splits : int, default 10; test_size : float, int, None, default=0.1
+            score = cross_val_score(knn, dataset.X_train, dataset.y_train, cv = cv, scoring = 'accuracy').mean()
             k_scores.append(score)
             print(k, ":", score)
         # 可视化结果
@@ -103,6 +105,7 @@ class Knn_Model:
         # 目前k=1时最佳，准确率达到88%+，可能原因参考https://stackoverflow.com/questions/36637112/why-does-k-1-in-knn-give-the-best-accuracy
         # Data tests have high similarity with the training data; The boundaries between classes are very clear
         # In general, the value of k may reduce the effect of noise on the classification, but makes the boundaries between each classification becomes more blurred.
+        # 使用shuffle后准确率显著提升，k=1时达到95.7%+，我理解的是shuffle后训练姐和测试集的数据分布更均衡，shuffle前可能测试集的数据比较难学习
     def train(self, dataset):
         self.model.fit(dataset.X_train, dataset.y_train)
     def save_model(self, file_path):
