@@ -13,7 +13,6 @@ Created on Mon Oct  1 11:00:25 2018
 # =============================================================================
 
 
-import tensorflow as tf
 
 #from keras import backend as K
 #K.set_image_data_format('channels_first')
@@ -25,11 +24,10 @@ import numpy as np
 
 
 from fr_utils import img_to_encoding
-import random
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.externals import joblib
-from sklearn import metrics
+import matplotlib.pyplot as plt
 
 # 建立facenet模型
 #with CustomObjectScope({'tf': tf}):
@@ -46,14 +44,6 @@ class Dataset:
         # 训练集
         self.X_train = None
         self.y_train = None
-        
-        # 验证集
-#        self.valid_images = None
-#        self.valid_labels = None
-        
-        # 测试集
-        self.X_test = None
-        self.y_test = None
         
         # 数据集加载路径
         self.path_name = path_name
@@ -79,29 +69,40 @@ class Dataset:
 #            X_encoding.append(encoding[0])
 #        X_encoding = np.array(X_encoding)
 #        print(X_encoding.shape)
-        X_embedding = img_to_encoding(images, model) # 考虑这里分批执行，否则可能内存不够？
-        X_train, X_test, y_train, y_test = train_test_split(X_embedding, labels, test_size = 0.3, random_state = random.randint(0, 100))
-#        print(test_labels) # 确认了每次都不一样
-        
+        X_embedding = img_to_encoding(images, model) # 考虑这里分批执行，否则可能内存不够，这里在img_to_encoding函数里通过predict的batch_size参数实现
         # 输出训练集、验证集和测试集的数量
-        print('X_train shape', X_train.shape)
-        print('y_train shape', y_train.shape)
-        print(X_train.shape[0], 'train samples')
-#        print(valid_images.shape[0], 'valid samples')
-        print(X_test.shape[0], 'test samples')
+        print('X_train shape', X_embedding.shape)
+        print('y_train shape', labels.shape)
+        print(X_embedding.shape[0], 'train samples')
         
-        self.X_train = X_train
-        self.X_test  = X_test
-        self.y_train = y_train
-        self.y_test  = y_test
+        self.X_train = X_embedding
+        self.y_train = labels
 
 # 定义并训练KNN Classifier模型
 class Knn_Model:
     # 初始化构造方法
     def __init__(self):
         self.model = None
-    def build_model(self):
-        self.model = KNeighborsClassifier()
+    def cross_val_and_build_model(self, dataset):
+        k_range = range(1,31)
+        k_scores = []
+        for k in k_range:
+            knn = KNeighborsClassifier(n_neighbors = k)
+            score = cross_val_score(knn, dataset.X_train, dataset.y_train, cv = 10, scoring = 'accuracy').mean()
+            k_scores.append(score)
+            print(k, ":", score)
+        # 可视化结果
+        plt.plot(k_range, k_scores)
+        plt.xlabel('Value of K for KNN')
+        plt.ylabel('Cross-Validated Accuracy')
+        plt.show()
+        n_neighbors_max = np.argmax(k_scores) + 1
+        print("The best k is: ", n_neighbors_max)
+        print("The accuracy is: ", k_scores[n_neighbors_max - 1], "When n_neighbor is: ", n_neighbors_max)
+        self.model = KNeighborsClassifier(n_neighbors = n_neighbors_max)
+        # 目前k=1时最佳，准确率达到88%+，可能原因参考https://stackoverflow.com/questions/36637112/why-does-k-1-in-knn-give-the-best-accuracy
+        # Data tests have high similarity with the training data; The boundaries between classes are very clear
+        # In general, the value of k may reduce the effect of noise on the classification, but makes the boundaries between each classification becomes more blurred.
     def train(self, dataset):
         self.model.fit(dataset.X_train, dataset.y_train)
     def save_model(self, file_path):
@@ -109,10 +110,6 @@ class Knn_Model:
         joblib.dump(self.model, file_path)
     def load_model(self, file_path):
         self.model = joblib.load(file_path)
-    def evaluate(self, dataset):
-        predict = self.model.predict(dataset.X_test)
-        accuracy = metrics.accuracy_score(dataset.y_test, predict)
-        print ('accuracy: %.2f%%' % (100 * accuracy))
     def predict(self, image):
         image = resize_image(image)
         image_embedding = img_to_encoding(np.array([image]), facenet)
@@ -125,11 +122,13 @@ class Knn_Model:
 # is because you have a syntax error earlier in the code, 
 # but it's not until the interpreter gets to the end of this statement that it realises that there is a problem. 
 # A common syntax error you might have is a missing close parenthesis on the last line of your code before this statement.
+        
+# knn k-fold思路，对knn不同k值循环，每次循环使用k折交叉验证，画出不同k值对应的evaluate准确率曲线，找到准确率最高的k值
+        
 if __name__ == "__main__":
     dataset = Dataset('./dataset/')
     dataset.load()
     model = Knn_Model()
-    model.build_model()
+    model.cross_val_and_build_model(dataset)
     model.train(dataset)
-    model.evaluate(dataset)
     model.save_model('./model/knn_classifier.model')
