@@ -32,6 +32,7 @@ import matplotlib.pyplot as plt
 # 建立facenet模型
 #with CustomObjectScope({'tf': tf}):
 facenet = load_model('./model/facenet_keras.h5') # bad marshal data (unknown type code)，这个模型只能用在python2环境
+#facenet.summary()
 
 class Dataset:
     # http://www.runoob.com/python3/python3-class.html
@@ -89,6 +90,8 @@ class Knn_Model:
         for k in k_range:
             knn = KNeighborsClassifier(n_neighbors = k)
 #            cv = KFold(n_splits = 10, shuffle = True, random_state = 0)
+            # https://github.com/scikit-learn/scikit-learn/issues/6361
+            # http://scikit-learn.org/stable/modules/cross_validation.html#computing-cross-validated-metrics
             cv = ShuffleSplit(random_state = 0) # n_splits : int, default 10; test_size : float, int, None, default=0.1
             score = cross_val_score(knn, dataset.X_train, dataset.y_train, cv = cv, scoring = 'accuracy').mean()
             k_scores.append(score)
@@ -105,7 +108,7 @@ class Knn_Model:
         # 目前k=1时最佳，准确率达到88%+，可能原因参考https://stackoverflow.com/questions/36637112/why-does-k-1-in-knn-give-the-best-accuracy
         # Data tests have high similarity with the training data; The boundaries between classes are very clear
         # In general, the value of k may reduce the effect of noise on the classification, but makes the boundaries between each classification becomes more blurred.
-        # 使用shuffle后准确率显著提升，k=1时达到95.7%+，我理解的是shuffle后训练姐和测试集的数据分布更均衡，shuffle前可能测试集的数据比较难学习
+        # 使用shuffle后准确率显著提升，k=1时达到95.7%+，我理解的是shuffle后训练集和测试集的数据分布更均衡，shuffle前可能测试集的数据比较难学习
     def train(self, dataset):
         self.model.fit(dataset.X_train, dataset.y_train)
     def save_model(self, file_path):
