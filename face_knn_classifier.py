@@ -75,7 +75,7 @@ class Dataset:
         print('X_train shape', X_embedding.shape)
         print('y_train shape', labels.shape)
         print(X_embedding.shape[0], 'train samples')
-        
+        # 这里对X_train就不再进一步normalization了，因为已经在facenet里有了l2_norm
         self.X_train = X_embedding
         self.y_train = labels
 
