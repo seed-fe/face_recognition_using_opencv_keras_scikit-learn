@@ -7,15 +7,13 @@ Created on Mon Oct  1 11:00:25 2018
 
 # =============================================================================
 # facenet+Knn的思路：
-# 1、用facenet将所有图片生成128维向量，准备训练数据，将数据集划分为训练集和测试集（70%/30%）
+# 1、用facenet将所有图片生成128维向量，准备训练数据
 # 2、建立KNN模型，进行训练和测试
 # 3、用训练好的模型进行实时人脸识别
 # =============================================================================
 
 
 
-#from keras import backend as K
-#K.set_image_data_format('channels_first')
 from keras.models import load_model
 from load_face_dataset import load_dataset, IMAGE_SIZE, resize_image
 
@@ -30,8 +28,7 @@ from sklearn.externals import joblib
 import matplotlib.pyplot as plt
 
 # 建立facenet模型
-#with CustomObjectScope({'tf': tf}):
-facenet = load_model('./model/facenet_keras.h5') # bad marshal data (unknown type code)，这个模型只能用在python2环境
+facenet = load_model('./model/facenet_keras.h5') # bad marshal data (unknown type code)，用Python2实现的模型时会报这个错
 #facenet.summary()
 
 class Dataset:
@@ -48,28 +45,12 @@ class Dataset:
         
         # 数据集加载路径
         self.path_name = path_name
-        
-        # 当前库采用的维度顺序，包括rows，cols，channels，用于后续卷积神经网络模型中第一层卷积层的input_shape参数
-        self.input_shape = None 
     
-    # 加载数据集并按照交叉验证的原则划分数据集并进行相关预处理工作
+    # 加载数据集
     def load(self, img_rows = IMAGE_SIZE, img_cols = IMAGE_SIZE, img_channels = 3, model = facenet):
         # 加载数据集到内存
         images, labels = load_dataset(self.path_name)
-        # tensorflow 作为后端，数据格式约定是channel_last，与这里数据本身的格式相符，如果是channel_first，就要对数据维度顺序进行一下调整
-#        if K.image_data_format == 'channel_first':
-#            images = images.reshape(images.shape[0],img_channels, img_rows, img_cols)
-#            self.input_shape = (img_channels, img_rows, img_cols)
-#        else:
-#            images = images.reshape(images.shape[0], img_rows, img_cols, img_channels)
-#            self.input_shape = (img_rows, img_cols, img_channels)
-#        X_encoding = []
-##        在img_to_encoding函数里已经进行了归一化，因此这里不需要再归一化了
-#        for image in images:
-#            encoding = img_to_encoding(image, model)
-#            X_encoding.append(encoding[0])
-#        X_encoding = np.array(X_encoding)
-#        print(X_encoding.shape)
+        # 生成128维特征向量
         X_embedding = img_to_encoding(images, model) # 考虑这里分批执行，否则可能内存不够，这里在img_to_encoding函数里通过predict的batch_size参数实现
         # 输出训练集、验证集和测试集的数量
         print('X_train shape', X_embedding.shape)
@@ -86,13 +67,16 @@ class Knn_Model:
         self.model = None
     def cross_val_and_build_model(self, dataset):
         k_range = range(1,31)
+#        k_range = range(1,60)
         k_scores = []
+        print("k vs accuracy:")
         for k in k_range:
             knn = KNeighborsClassifier(n_neighbors = k)
 #            cv = KFold(n_splits = 10, shuffle = True, random_state = 0)
             # https://github.com/scikit-learn/scikit-learn/issues/6361
             # http://scikit-learn.org/stable/modules/cross_validation.html#computing-cross-validated-metrics
-            cv = ShuffleSplit(random_state = 0) # n_splits : int, default 10; test_size : float, int, None, default=0.1
+            cv = ShuffleSplit(random_state = 0) # n_splits : int, default 10; test_size : float, int, None, default=0.1，设置了random_state = 0，每次的数据划分相同，训练结果也相同
+#            score = cross_val_score(knn, dataset.X_train, dataset.y_train, cv = 10, scoring = 'accuracy').mean() # cv参数取整数的时候默认用KFold方法划分数据，这里两次运行的结果一样，可能说明KFold里的random_state参数设为了整数
             score = cross_val_score(knn, dataset.X_train, dataset.y_train, cv = cv, scoring = 'accuracy').mean()
             k_scores.append(score)
             print(k, ":", score)
@@ -104,11 +88,13 @@ class Knn_Model:
         n_neighbors_max = np.argmax(k_scores) + 1
         print("The best k is: ", n_neighbors_max)
         print("The accuracy is: ", k_scores[n_neighbors_max - 1], "When n_neighbor is: ", n_neighbors_max)
+        
         self.model = KNeighborsClassifier(n_neighbors = n_neighbors_max)
+        
         # 目前k=1时最佳，准确率达到88%+，可能原因参考https://stackoverflow.com/questions/36637112/why-does-k-1-in-knn-give-the-best-accuracy
         # Data tests have high similarity with the training data; The boundaries between classes are very clear
         # In general, the value of k may reduce the effect of noise on the classification, but makes the boundaries between each classification becomes more blurred.
-        # 使用shuffle后准确率显著提升，k=1时达到95.7%+，我理解的是shuffle后训练集和测试集的数据分布更均衡，shuffle前可能测试集的数据比较难学习
+        # 使用shuffle后准确率显著提升，k=1时达到98.9%+，我理解的是shuffle后训练集和测试集的数据类别分布更均衡，shuffle前可能数据的类别分布不均衡，导致准确率较低。
     def train(self, dataset):
         self.model.fit(dataset.X_train, dataset.y_train)
     def save_model(self, file_path):
@@ -119,7 +105,7 @@ class Knn_Model:
     def predict(self, image):
         image = resize_image(image)
         image_embedding = img_to_encoding(np.array([image]), facenet)
-        label = self.model.predict(image_embedding)
+        label = self.model.predict(image_embedding) # predict方法返回值是array of shape [n_samples]，因此下面要用label[0]从array中取得数值
         return label[0]
 
 # https://teamtreehouse.com/community/getting-a-syntax-error-at-main
@@ -136,5 +122,5 @@ if __name__ == "__main__":
     dataset.load()
     model = Knn_Model()
     model.cross_val_and_build_model(dataset)
-    model.train(dataset)
-    model.save_model('./model/knn_classifier.model')
+#    model.train(dataset)
+#    model.save_model('./model/knn_classifier.model')
