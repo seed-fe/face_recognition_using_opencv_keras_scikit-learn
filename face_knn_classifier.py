@@ -105,7 +105,7 @@ class Knn_Model:
     def predict(self, image):
         image = resize_image(image)
         image_embedding = img_to_encoding(np.array([image]), facenet)
-        label = self.model.predict(image_embedding) # predict方法返回值是array of shape [n_samples]，因此下面要用label[0]从array中取得数值
+        label = self.model.predict(image_embedding) # predict方法返回值是array of shape [n_samples]，因此下面要用label[0]从array中取得数值，https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html#sklearn.neighbors.KNeighborsClassifier.predict
         return label[0]
 
 # https://teamtreehouse.com/community/getting-a-syntax-error-at-main
