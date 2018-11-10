@@ -77,7 +77,7 @@ class Knn_Model:
             # http://scikit-learn.org/stable/modules/cross_validation.html#computing-cross-validated-metrics
             cv = ShuffleSplit(random_state = 0) # n_splits : int, default 10; test_size : float, int, None, default=0.1，设置了random_state = 0，每次的数据划分相同，训练结果也相同
 #            score = cross_val_score(knn, dataset.X_train, dataset.y_train, cv = 10, scoring = 'accuracy').mean() # cv参数取整数的时候默认用KFold方法划分数据，这里两次运行的结果一样，可能说明KFold里的random_state参数设为了整数
-            score = cross_val_score(knn, dataset.X_train, dataset.y_train, cv = cv, scoring = 'accuracy').mean()
+            score = cross_val_score(knn, dataset.X_train, dataset.y_train, cv = cv, scoring = 'accuracy').mean() # numpy.ndarray.mean
             k_scores.append(score)
             print(k, ":", score)
         # 可视化结果
