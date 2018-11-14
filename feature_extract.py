@@ -90,6 +90,7 @@ def img_to_encoding(images, model):
     return embedding
 
 # 注意这里必须加上if __name__ == "__main__":，否则运行face_knn_classifier.py的时候也会运行load_dataset函数，而不是直接加载存好的数据，会很慢
+# 参考  http://blog.konghy.cn/2017/04/24/python-entry-program/
 if __name__ == "__main__":
     images, labels = load_dataset('./dataset_image/')
     # 生成128维特征向量
