@@ -8,3 +8,5 @@ lfw
 unused
 model_well
 k_vs_accuracy
+dataset_image
+dataset_pkl

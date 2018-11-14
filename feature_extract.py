@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Aug 12 21:24:17 2018
+Created on Mon Nov 12 12:33:17 2018
 
 @author: 123
 """
@@ -8,6 +8,8 @@ Created on Sun Aug 12 21:24:17 2018
 import os
 import numpy as np
 import cv2
+from keras.models import load_model
+import pickle
 
 IMAGE_SIZE = 160 # 指定图像大小
 
@@ -69,8 +71,35 @@ def load_dataset(data_dir):
     return images, labels
 
 
-if __name__ == '__main__':
-    path_name = os.getcwd() # 获取当前工作目录
-    images = load_dataset('./dataset/')
-#    print(labels)
-#    print(labels.shape)
+# 建立facenet模型
+facenet = load_model('./model/facenet_keras.h5') # bad marshal data (unknown type code)，用Python2实现的模型时会报这个错
+#facenet.summary()
+
+def img_to_encoding(images, model):
+    # 这里image的格式就是opencv读入后的格式
+    images = images[...,::-1] # Color image loaded by OpenCV is in BGR mode. But Matplotlib displays in RGB mode. 这里的操作实际是对channel这一dim进行reverse，从BGR转换为RGB
+    images = np.around(images/255.0, decimals=12) # np.around是四舍五入，其中decimals是保留的小数位数,这里进行了归一化
+    # https://stackoverflow.com/questions/44972565/what-is-the-difference-between-the-predict-and-predict-on-batch-methods-of-a-ker
+    if images.shape[0] > 1:
+        embedding = model.predict(images, batch_size = 128) # predict是对多个batch进行预测，这里的128是尝试后得出的内存能承受的最大值
+    else:
+        embedding = model.predict_on_batch(images) # predict_on_batch是对单个batch进行预测
+    # 报错，operands could not be broadcast together with shapes (2249,128) (2249,)，因此要加上keepdims = True
+    embedding = embedding / np.linalg.norm(embedding, axis = 1, keepdims = True) # 注意这个项目里用的keras实现的facenet模型没有l2_norm，因此要在这里加上
+    
+    return embedding
+
+# 注意这里必须加上if __name__ == "__main__":，否则运行face_knn_classifier.py的时候也会运行load_dataset函数，而不是直接加载存好的数据，会很慢
+if __name__ == "__main__":
+    images, labels = load_dataset('./dataset_image/')
+    # 生成128维特征向量
+    X_embeddings = img_to_encoding(images, facenet) # 考虑这里分批执行，否则可能内存不够，这里在img_to_encoding函数里通过predict的batch_size参数实现
+
+    # pickle保存数据
+    file_embeddings = open('./dataset_pkl/embeddings.pkl', 'wb')
+    pickle.dump(X_embeddings, file_embeddings)
+    file_embeddings.close()
+
+    file_labels = open('./dataset_pkl/labels.pkl', 'wb')
+    pickle.dump(labels, file_labels)
+    file_labels.close

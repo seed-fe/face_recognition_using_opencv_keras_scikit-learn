@@ -14,22 +14,16 @@ Created on Mon Oct  1 11:00:25 2018
 
 
 
-from keras.models import load_model
-from load_face_dataset import load_dataset, IMAGE_SIZE, resize_image
 
 
 import numpy as np
-
-
-from fr_utils import img_to_encoding
+import pickle
+from feature_extract import resize_image, facenet, img_to_encoding
 from sklearn.model_selection import cross_val_score, ShuffleSplit, KFold
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.externals import joblib
 import matplotlib.pyplot as plt
 
-# 建立facenet模型
-facenet = load_model('./model/facenet_keras.h5') # bad marshal data (unknown type code)，用Python2实现的模型时会报这个错
-#facenet.summary()
 
 class Dataset:
     # http://www.runoob.com/python3/python3-class.html
@@ -47,17 +41,19 @@ class Dataset:
         self.path_name = path_name
     
     # 加载数据集
-    def load(self, img_rows = IMAGE_SIZE, img_cols = IMAGE_SIZE, img_channels = 3, model = facenet):
+    def load(self):
         # 加载数据集到内存
-        images, labels = load_dataset(self.path_name)
-        # 生成128维特征向量
-        X_embedding = img_to_encoding(images, model) # 考虑这里分批执行，否则可能内存不够，这里在img_to_encoding函数里通过predict的batch_size参数实现
+        file_embeddings = open(self.path_name + 'embeddings.pkl', 'rb')
+        # 加载128维特征向量
+        X_embeddings = pickle.load(file_embeddings) # 考虑这里分批执行，否则可能内存不够，这里在img_to_encoding函数里通过predict的batch_size参数实现
+        file_labels = open(self.path_name + 'labels.pkl', 'rb')
+        labels = pickle.load(file_labels)
         # 输出训练集、验证集和测试集的数量
-        print('X_train shape', X_embedding.shape)
+        print('X_train shape', X_embeddings.shape)
         print('y_train shape', labels.shape)
-        print(X_embedding.shape[0], 'train samples')
+        print(X_embeddings.shape[0], 'train samples')
         # 这里对X_train就不再进一步normalization了，因为已经在facenet里有了l2_norm
-        self.X_train = X_embedding
+        self.X_train = X_embeddings
         self.y_train = labels
 
 # 定义并训练KNN Classifier模型
@@ -118,7 +114,7 @@ class Knn_Model:
 # knn k-fold思路，对knn不同k值循环，每次循环使用k折交叉验证，画出不同k值对应的evaluate准确率曲线，找到准确率最高的k值
         
 if __name__ == "__main__":
-    dataset = Dataset('./dataset/')
+    dataset = Dataset('./dataset_pkl/')
     dataset.load()
     model = Knn_Model()
     model.cross_val_and_build_model(dataset)
