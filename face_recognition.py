@@ -8,9 +8,12 @@ from keras import backend as K
 K.set_image_data_format('channels_first')
 import cv2
 
-from face_knn_classifier import Knn_Model
-model = Knn_Model()
-model.load_model('./model/knn_classifier.model')
+#from face_classifier import Knn_Model
+from face_classifier import svm_Model
+#model = Knn_Model()
+model = svm_Model()
+#model.load_model('./model/knn_classifier.model')
+model.load_model('./model/svm_classifier.model')
 
 # Face Recognition              
 #框住人脸的矩形边框颜色       
