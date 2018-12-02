@@ -19,7 +19,7 @@ Created on Mon Oct  1 11:00:25 2018
 import numpy as np
 import pickle
 from feature_extract import resize_image, facenet, img_to_encoding
-from sklearn.model_selection import cross_val_score, ShuffleSplit, KFold
+from sklearn.model_selection import cross_val_score, ShuffleSplit, KFold, learning_curve
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.externals import joblib
 import matplotlib.pyplot as plt
@@ -122,6 +122,17 @@ class svm_Model:
         self.model = SVC(kernel = 'linear', probability = True)
     def train(self, dataset):
         self.model.fit(dataset.X_train, dataset.y_train)
+#        https://morvanzhou.github.io/tutorials/machine-learning/sklearn/3-3-cross-validation2/
+        cv = ShuffleSplit(random_state = 0)
+        train_sizes, train_loss, test_loss = learning_curve(self.model, dataset.X_train, dataset.y_train, cv = cv, scoring = 'accuracy', train_sizes=[0.1, 0.25, 0.5, 0.75, 1])
+        train_loss_mean = np.mean(train_loss, axis = 1)
+        test_loss_mean = np.mean(test_loss, axis = 1)
+        plt.plot(train_sizes, train_loss_mean, 'o-', color="r", label="Training")
+        plt.plot(train_sizes, test_loss_mean, 'o-', color="g", label="Cross-validation")
+        plt.xlabel("Training examples")
+        plt.ylabel("Loss")
+        plt.legend(loc="best")
+        plt.show()
     def save_model(self, file_path):
         joblib.dump(self.model, file_path)
     def load_model(self, file_path):
@@ -142,4 +153,4 @@ if __name__ == "__main__":
     model = svm_Model()
     model.build_model()
     model.train(dataset)
-    model.save_model('./model/svm_classifier.model')
+#    model.save_model('./model/svm_classifier.model')
