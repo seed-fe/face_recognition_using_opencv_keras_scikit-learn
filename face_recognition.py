@@ -22,6 +22,15 @@ color = (0, 255, 0)
 classifier = cv2.CascadeClassifier('haarcascade_frontalface_alt2.xml') # 加载分类器
 #捕获指定摄像头的实时视频流
 cap = cv2.VideoCapture(0)
+name_list = ['Lin', 'Bill', 'Unknown']
+def mark_face(name):
+    cv2.rectangle(frame, (x - 10, y - 10), (x + w + 10, y + h + 10), color, thickness = 2)
+    cv2.putText(frame, name, 
+                (x + 30, y + 30),                      #坐标
+                cv2.FONT_HERSHEY_SIMPLEX,              #字体
+                1,                                     #字号
+                (255,0,255),                           #颜色
+                2)
 while cap.isOpened():
         ok, frame = cap.read() # type(frame) <class 'numpy.ndarray'>
         if not ok:
@@ -42,27 +51,10 @@ while cap.isOpened():
 #                print(faceID) # [0]
 #                print(type(faceID)) # <class 'numpy.ndarray'>
 #                print(faceID.shape) # (1,)
-#                #如果是“我”
-                    if faceID == 0:                                                        
-                        cv2.rectangle(frame, (x - 10, y - 10), (x + w + 10, y + h + 10), color, thickness = 2)
-                    
-                    #文字提示是谁
-                        cv2.putText(frame,'Bill', 
-                                (x + 30, y + 30),                      #坐标
-                                cv2.FONT_HERSHEY_SIMPLEX,              #字体
-                                1,                                     #字号
-                                (255,0,255),                           #颜色
-                                2)                                     #字的线宽
-                    else:
-                        cv2.rectangle(frame, (x - 10, y - 10), (x + w + 10, y + h + 10), color, thickness = 2)
-                            #文字提示是谁
-                        cv2.putText(frame,'Unknown', 
-                                (x + 30, y + 30),                      #坐标
-                                cv2.FONT_HERSHEY_SIMPLEX,              #字体
-                                1,                                     #字号
-                                (255,0,255),                           #颜色
-                                2)                                     #字的线宽
-#                    pass
+                    for i in range(len(name_list)):
+                        if faceID == i:
+                            name = name_list[i]
+                            mark_face(name)
         cv2.imshow("Detecting your face.", frame)
         
         #等待10毫秒看是否有按键输入

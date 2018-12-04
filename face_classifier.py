@@ -119,16 +119,18 @@ class svm_Model:
     def __init__(self):
         self.model = None
     def build_model(self):
-        self.model = SVC(kernel = 'linear', probability = True)
+        self.model = SVC(kernel = 'linear', probability = True, decision_function_shape = 'ovo')
     def train(self, dataset):
         self.model.fit(dataset.X_train, dataset.y_train)
 #        https://morvanzhou.github.io/tutorials/machine-learning/sklearn/3-3-cross-validation2/
         cv = ShuffleSplit(random_state = 0)
-        train_sizes, train_loss, test_loss = learning_curve(self.model, dataset.X_train, dataset.y_train, cv = cv, scoring = 'accuracy', train_sizes=[0.1, 0.25, 0.5, 0.75, 1])
-        train_loss_mean = np.mean(train_loss, axis = 1)
-        test_loss_mean = np.mean(test_loss, axis = 1)
-        plt.plot(train_sizes, train_loss_mean, 'o-', color="r", label="Training")
-        plt.plot(train_sizes, test_loss_mean, 'o-', color="g", label="Cross-validation")
+        train_sizes, train_accuracies, test_accuracies = learning_curve(self.model, dataset.X_train, dataset.y_train, cv = cv, scoring = 'accuracy', train_sizes=[0.1, 0.25, 0.5, 0.75, 1])
+        train_accuracies_mean = np.mean(train_accuracies, axis = 1)
+        test_accuracies_mean = np.mean(test_accuracies, axis = 1)
+        print('train accuracies: ', train_accuracies_mean)
+        print('test accuracies: ', test_accuracies_mean)
+        plt.plot(train_sizes, train_accuracies_mean, 'o-', color="r", label="Training")
+        plt.plot(train_sizes, test_accuracies_mean, 'o-', color="g", label="Cross-validation")
         plt.xlabel("Training examples")
         plt.ylabel("Loss")
         plt.legend(loc="best")

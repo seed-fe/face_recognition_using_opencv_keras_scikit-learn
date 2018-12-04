@@ -51,4 +51,4 @@ def getTrainingData(window_name, camera_id, path_name, max_num): # path_name是�
 # 主函数
 if __name__ =='__main__':
     print ('catching your face and writting into disk...')
-    getTrainingData('getTrainData',0,'training_data_test/',100) # 注意这里的training_data 文件夹就在程序工作目录下
+    getTrainingData('getTrainData',0,'dataset_image/lin/',840) # 注意这里的training_data 文件夹就在程序工作目录下
