@@ -4,6 +4,7 @@ __pycache__
 *.txt
 data_lin
 data_me_dark
+dataset_h5
 lfw
 unused
 model_well
@@ -11,3 +12,8 @@ k_vs_accuracy
 dataset_image
 dataset_pkl
 weights
+face_embeddings.h5
+face_labels.h5
+file.hdf5
+h5py_test.py
+test_signs.h5

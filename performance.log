@@ -1,0 +1,10 @@
+01/03/2019 05:22:15 PM INFO    : Loading pkl dataset took 0.10107588768005371 seconds.
+01/03/2019 05:24:55 PM INFO    : Loading hdf5 dataset took 0.12199544906616211 seconds.
+01/06/2019 10:10:14 PM INFO    : Loading knn model took 0.0449986457824707 seconds.
+01/06/2019 10:10:29 PM INFO    : Predicting one face using knn model took 14.470635890960693 seconds.
+01/06/2019 10:16:36 PM INFO    : Loading svm model took 0.006001710891723633 seconds.
+01/06/2019 10:16:56 PM INFO    : Predicting one face using svm model took 19.377376794815063 seconds.
+01/07/2019 08:51:42 PM INFO    : Loading svm model took 0.03000020980834961 seconds.
+01/07/2019 08:51:48 PM INFO    : Predicting one face using svm model took 0.0010004043579101562 seconds.
+01/07/2019 09:06:46 PM INFO    : Loading knn model took 0.15200281143188477 seconds.
+01/07/2019 09:06:53 PM INFO    : Predicting one face using knn model took 0.022997379302978516 seconds.
