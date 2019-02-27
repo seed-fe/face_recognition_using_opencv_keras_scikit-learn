@@ -1,5 +1,4 @@
 dataset/**
-model/**
 __pycache__
 *.txt
 data_lin
@@ -17,3 +16,5 @@ face_labels.h5
 file.hdf5
 h5py_test.py
 test_signs.h5
+model/**
+!model/facenet_keras.h5
