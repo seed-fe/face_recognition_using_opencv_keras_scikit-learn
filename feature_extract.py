@@ -9,7 +9,7 @@ import os
 import numpy as np
 import cv2
 from keras.models import load_model
-import pickle
+#import pickle
 import h5py
 
 IMAGE_SIZE = 160 # 指定图像大小
@@ -44,7 +44,6 @@ def resize_image(image, height = IMAGE_SIZE, width = IMAGE_SIZE):
     # 调整图像大小并返回图像，目的是减少计算量和内存占用，提升训练速度
     return cv2.resize(constant, (height, width))
 
-# path_name是当前工作目录，后面会由os.getcwd()获得
 def load_dataset(data_dir):
     images = [] # 用来存放图片
     labels = [] # 用来存放类别标签
@@ -56,7 +55,7 @@ def load_dataset(data_dir):
         person_pics = os.listdir(person_dir) # 某一类人脸路径下的全部人脸数据文件
         for face in person_pics: # face是某一分类文件夹下人脸图片数据的文件名
             img = cv2.imread(os.path.join(person_dir, face)) # 通过os.path.join得到人脸图片的绝对路径
-            if img is None: # 遇到部分数据有点问题，报错'NoneType' object has no attribute 'shape'
+            if img is None: # 遇到部分数据有点问题，报错'NoneType' object has no attribute 'shape'，所以要判断一下图片是否为空
                 pass
             else:
                 img = resize_image(img, IMAGE_SIZE, IMAGE_SIZE)
@@ -82,7 +81,7 @@ def img_to_encoding(images, model):
     images = np.around(images/255.0, decimals=12) # np.around是四舍五入，其中decimals是保留的小数位数,这里进行了归一化
     # https://stackoverflow.com/questions/44972565/what-is-the-difference-between-the-predict-and-predict-on-batch-methods-of-a-ker
     if images.shape[0] > 1:
-        embedding = model.predict(images, batch_size = 256) # predict是对多个batch进行预测，这里的128是尝试后得出的内存能承受的最大值
+        embedding = model.predict(images, batch_size = 256) # predict是对多个batch进行预测，这里的256是尝试后得出的内存能承受的最大值
     else:
         embedding = model.predict_on_batch(images) # predict_on_batch是对单个batch进行预测
     # 报错，operands could not be broadcast together with shapes (2249,128) (2249,)，因此要加上keepdims = True
@@ -91,7 +90,7 @@ def img_to_encoding(images, model):
     return embedding
 
 
-# 注意这里必须加上if __name__ == "__main__":，否则运行face_classifier.py的时候也会运行load_dataset函数，而不是直接加载存好的数据，会很慢
+# 注意这里必须加上if __name__ == "__main__":，否则运行face_classifier.py的时候也会运行load_dataset函数，而不是直接加载存好的数据，会很慢，因为在face_classifier.py里加载了resize_image, facenet, img_to_encoding用来定义knn和SVM的predict函数
 # 参考  http://blog.konghy.cn/2017/04/24/python-entry-program/
 if __name__ == "__main__":
     images, labels = load_dataset('./dataset_image/')
@@ -99,13 +98,11 @@ if __name__ == "__main__":
     X_embeddings = img_to_encoding(images, facenet) # 考虑这里分批执行，否则可能内存不够，这里在img_to_encoding函数里通过predict的batch_size参数实现
 
     # pickle保存数据
-#    file_embeddings = open('./dataset_pkl/embeddings.pkl', 'wb')
-#    pickle.dump(X_embeddings, file_embeddings)
-#    file_embeddings.close()
-#
-#    file_labels = open('./dataset_pkl/labels.pkl', 'wb')
-#    pickle.dump(labels, file_labels)
-#    file_labels.close
+#    with open('./dataset_pkl/embeddings.pkl', 'wb') as file_embeddings:
+#        pickle.dump(X_embeddings, file_embeddings)
+#    
+#    with open('./dataset_pkl/labels.pkl', 'wb') as file_labels:
+#        pickle.dump(labels, file_labels)
     
 #    hdf5保存数据
 #    创建h5文件的语句必须写在if __name__ == "__main__":里，否则运行face_classifier.py的时候会执行创建h5文件的语句

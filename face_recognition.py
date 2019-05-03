@@ -4,6 +4,7 @@ Created on Tue Sep 11 17:33:58 2018
 
 @author: 123
 """
+import os
 from keras import backend as K
 K.set_image_data_format('channels_first')
 import cv2
@@ -22,7 +23,8 @@ color = (0, 255, 0)
 classifier = cv2.CascadeClassifier('haarcascade_frontalface_alt2.xml') # 加载分类器
 #捕获指定摄像头的实时视频流
 cap = cv2.VideoCapture(0)
-name_list = ['Lin', 'Bill', 'Unknown']
+
+name_list = os.listdir('./dataset_image/')
 def mark_face(name):
     cv2.rectangle(frame, (x - 10, y - 10), (x + w + 10, y + h + 10), color, thickness = 2)
     cv2.putText(frame, name, 
@@ -48,13 +50,8 @@ while cap.isOpened():
                     break
                 else:
                     faceID = model.predict(image)
-#                print(faceID) # [0]
-#                print(type(faceID)) # <class 'numpy.ndarray'>
-#                print(faceID.shape) # (1,)
-                    for i in range(len(name_list)):
-                        if faceID == i:
-                            name = name_list[i]
-                            mark_face(name)
+                    name = name_list[faceID]
+                    mark_face(name)
         cv2.imshow("Detecting your face.", frame)
         
         #等待10毫秒看是否有按键输入
