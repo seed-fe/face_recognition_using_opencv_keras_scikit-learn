@@ -1,4 +1,7 @@
 dataset/**
+dataset_h5/**
+dataset_image/**
+dataset_pkl/**
 model/**
 __pycache__
 *.txt
@@ -7,4 +10,6 @@ data_me_dark
 lfw
 unused
 model_well
-k_vs_accuracy
+*.h5
+*.hdf5
+h5py_test.py
